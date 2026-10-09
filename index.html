@@ -1503,10 +1503,22 @@ async function loadCatalog() {
   try {
     const h = { 'Content-Type': 'application/json', apikey: DB.key };
     if (/^eyJ/.test(DB.key)) h.Authorization = 'Bearer ' + DB.key;
-    const r = await fetch(DB.url.replace(/\/+$/, '') + '/rest/v1/rpc/' + DB.fn, { method: 'POST', headers: h, body: '{}' });
-    if (!r.ok) throw new Error('HTTP ' + r.status + ' ' + (await r.text().catch(() => '')).slice(0, 120));
-    const data = await r.json();
-    if (!Array.isArray(data)) throw new Error('bad data');
+    const get = async () => {
+      const r = await fetch(DB.url.replace(/\/+$/, '') + '/rest/v1/rpc/' + DB.fn, { method: 'POST', headers: h, body: '{}' });
+      if (!r.ok) throw new Error('HTTP ' + r.status + ' ' + (await r.text().catch(() => '')).slice(0, 120));
+      const d = await r.json(); if (!Array.isArray(d) || !d.length) throw new Error('empty catalog'); return d;
+    };
+    let data;
+    try { data = await get(); }
+    catch (e1) {
+      await new Promise(ok => setTimeout(ok, 1500));          // one quick retry
+      try { data = await get(); }
+      catch (e2) {                                              // last good copy saved in this browser, if any
+        let saved = null; try { saved = JSON.parse(localStorage.getItem('pyrobuy_catalog') || 'null'); } catch (e) {}
+        if (Array.isArray(saved) && saved.length) data = saved; else throw e2;
+      }
+    }
+    try { localStorage.setItem('pyrobuy_catalog', JSON.stringify(data)); } catch (e) { /* too big or blocked: fine */ }
     ITEMS = data.filter(i => i && i.item_no).map(prep);
   } catch (e) {
     console.warn('Catalog not available, showing sample items:', e.message);
