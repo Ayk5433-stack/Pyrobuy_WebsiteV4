@@ -1302,6 +1302,9 @@ body.editing{color-scheme:dark}
 .item-photo>img.contain{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
 .pcard .img,.pslim .img,.item-photo{min-height:0;contain:size layout}
 .pcard .img img,.pslim .img img,.item-photo img,.na-item .t img,.fav-row .thumb img{object-fit:contain!important;max-width:100%;max-height:100%}
+/* map clusters (groups of dealers) in brand colors */
+.marker-cluster{background:rgba(215,25,31,.25)!important}
+.marker-cluster div{background:var(--accent)!important;color:#fff!important;font-weight:700}
 /* the site editor keeps its own dark theme */
 body.editing{--bg:#161616;--bg-alt:#1f1f1f;--card:#0b0b0b;--text:#fff;--muted:#b5b5b5;--line:#333;background:#161616;color:#fff}
 body.editing .chip,body.editing .pager button{background:#111;color:#ddd;border-color:#333}
@@ -2227,17 +2230,20 @@ const telHref = p => 'tel:' + String(p || '').replace(/[^\d+]/g, '');
 /* One small map layer: Google Maps when a key is set, otherwise Leaflet + free map tiles. */
 const MAP = {
   kind: '', map: null, markers: [], user: null, cluster: null, info: null,
+  googleFailed: false,
   async init(el) {
     const key = SITE.dealers.googleMapsKey;
-    if (key && SITE.dealers.mapProvider === 'google') {
+    if (key && SITE.dealers.mapProvider === 'google' && !this.googleFailed) {
+      // If Google refuses the key (API not turned on, wrong website, billing off), switch to the free map automatically.
+      window.gm_authFailure = () => { MAP.googleFailed = true; MAP.kind = ''; MAP.map = null; MAP.markers = []; MAP.user = null; MAP.cluster = null;
+        const box = document.getElementById('dlMap'); if (!box) return; box.innerHTML = '';
+        MAP.init(box).then(() => { DL.origin ? runDealerSearch() : showAllDealers(); }).catch(() => {}); };
       if (!window.google || !google.maps) await new Promise((ok, bad) => { window.__gmReady = ok;
         loadScript('https://maps.googleapis.com/maps/api/js?key=' + encodeURIComponent(key) + '&callback=__gmReady').catch(bad); });
       try { await loadScript('https://unpkg.com/@googlemaps/markerclusterer@2.5.3/dist/index.min.js'); } catch (e) {}
       this.kind = 'google';
       this.map = new google.maps.Map(el, { center: { lat: 39.5, lng: -98.35 }, zoom: 4, mapTypeControl: false, streetViewControl: false,
-        styles: [{ elementType: 'geometry', stylers: [{ color: '#1d1d1d' }] }, { elementType: 'labels.text.fill', stylers: [{ color: '#9a9a9a' }] },
-                 { elementType: 'labels.text.stroke', stylers: [{ color: '#111' }] }, { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#333' }] },
-                 { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0e1622' }] }, { featureType: 'poi', stylers: [{ visibility: 'off' }] }] });
+        styles: [{ featureType: 'poi', stylers: [{ visibility: 'off' }] }] });
       this.info = new google.maps.InfoWindow();
     } else {
       loadCss('https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css');
@@ -2247,8 +2253,8 @@ const MAP = {
       try { await loadScript('https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.min.js'); } catch (e) {}
       this.kind = 'leaflet';
       this.map = L.map(el, { scrollWheelZoom: false }).setView([39.5, -98.35], 4);
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd',
-        attribution: '&copy; OpenStreetMap contributors &copy; CARTO' }).addTo(this.map);
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19,
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors' }).addTo(this.map);
     }
   },
   popup(d) { return `<b>${esc(d.name)}</b><br>${esc(dealerAddr(d))}${d.phone ? `<br>${esc(d.phone)}` : ''}<br><a href="${dirUrl(d)}" target="_blank" rel="noopener">Get directions ↗</a>`; },
