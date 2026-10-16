@@ -327,6 +327,38 @@ const SITE = {
     tiktok:    ''
   },
 
+  /* Home page: order of the sections under the banner + numbers bar (drag to reorder in the site editor).
+     arrivals = New Arrivals, feature = featured brand (Syko), categories = Product Classification,
+     brands = Featured Brands, why = Why PyroBuy, contact = "Have a question?" band */
+  homeOrder: ['arrivals', 'feature', 'categories', 'brands', 'why', 'contact'],
+  homeHidden: [],
+  /* Redirect links: yoursite.com/#/<from> (or yoursite.com/<from>) goes to <to>.
+     <to> can be a page on this site (#/products?brand=SYKO) or a full web address. */
+  redirects: [
+    { from: 'admin', to: '#/editor' },
+    { from: 'syko',  to: '#/products?brand=SYKO' }
+  ],
+  /* Footer link columns (the Contact column with the email stays first) */
+  footerCols: [
+    { title: 'Products', links: [
+      { label: 'USA Fireworks', link: '#/products?cat=USA Fireworks' },
+      { label: 'Europe Fireworks', link: '#/products?cat=Europe Fireworks' },
+      { label: 'Professional Display Fireworks', link: '#/products?cat=Professional Display Fireworks' },
+      { label: 'Promo Supplier & Equipment', link: '#/products?cat=Promo Supplier %26 Equipment' } ] },
+    { title: 'Brands', links: [
+      { label: 'Dominator', link: '#/products?brand=Dominator' },
+      { label: 'Dominator - USA', link: '#/products?brand=Dominator USA' },
+      { label: 'Pro-Level: Dominator', link: '#/products?brand=Dominator Pro Level' },
+      { label: 'Dominator ECO', link: '#/products?brand=Dominator ECO' },
+      { label: 'Mad OX', link: '#/products?brand=Mad OX' } ] },
+    { title: 'About', links: [
+      { label: 'Company Profile', link: '#/about' },
+      { label: 'Blog', link: '#/blog' },
+      { label: 'Marketing', link: '#/marketing' },
+      { label: 'Dealer Locator', link: '#/dealers' },
+      { label: 'Contact us', link: '#/contact' } ] }
+  ],
+
   /* New items come from this YouTube playlist (the part after "list=" in the playlist link).
      Add or remove videos in the playlist and the website follows: the item number at the start of each
      video title (e.g. "SK393 - Strobe Strike…") marks that item NEW. Uses the Google key above. '' = off. */
@@ -1311,6 +1343,13 @@ body.editing{color-scheme:dark}
 .bl-card .pic>img,.bl-feature .pic>img,.post .pic>img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain!important}
 @media(min-width:900px){.bl-feature{align-items:center}}
 /* the site editor keeps its own dark theme */
+.ed-drag{cursor:grab}
+.ed-handle{display:inline-block;color:#888;font-size:1.05rem;margin-right:6px;cursor:grab;user-select:none}
+.ed-str.ed-drag{display:flex;align-items:center;gap:8px}
+.ed-dragging{opacity:.45}
+.ed-over{outline:2px dashed var(--hl);outline-offset:2px}
+.ed-order{display:grid;gap:6px;margin-top:6px}
+.ed-order .ed-str{background:#111;border:1px solid #333;border-radius:8px;padding:8px 10px}
 body.editing{--bg:#161616;--bg-alt:#1f1f1f;--card:#0b0b0b;--text:#fff;--muted:#b5b5b5;--line:#333;background:#161616;color:#fff}
 body.editing .chip,body.editing .pager button{background:#111;color:#ddd;border-color:#333}
 body.editing input[type=search],body.editing select{background-color:#111;color:#fff;border-color:#333}
@@ -1355,35 +1394,7 @@ body.editing input[type=search],body.editing select{background-color:#111;color:
         <h4>Contact</h4>
         <p>Email:<br><a class="mail-link" href="#"></a></p>
       </div>
-      <div>
-        <h4>Products</h4>
-        <ul>
-          <li><a href="#/products?cat=USA Fireworks">USA Fireworks</a></li>
-          <li><a href="#/products?cat=Europe Fireworks">Europe Fireworks</a></li>
-          <li><a href="#/products?cat=Professional Display Fireworks">Professional Display Fireworks</a></li>
-          <li><a href="#/products?cat=Promo Supplier %26 Equipment">Promo Supplier &amp; Equipment</a></li>
-        </ul>
-      </div>
-      <div>
-        <h4>Brands</h4>
-        <ul>
-          <li><a href="#/products?brand=Dominator">Dominator</a></li>
-          <li><a href="#/products?brand=Dominator USA">Dominator - USA</a></li>
-          <li><a href="#/products?brand=Dominator Pro Level">Pro-Level: Dominator</a></li>
-          <li><a href="#/products?brand=Dominator ECO">Dominator ECO</a></li>
-          <li><a href="#/products?brand=Mad OX">Mad OX</a></li>
-        </ul>
-      </div>
-      <div>
-        <h4>About</h4>
-        <ul>
-          <li><a href="#/about">Company Profile</a></li>
-          <li><a href="#/blog">Blog</a></li>
-          <li><a href="#/marketing">Marketing</a></li>
-          <li><a href="#/dealers">Dealer Locator</a></li>
-          <li><a href="#/contact">Contact us</a></li>
-        </ul>
-      </div>
+      <div id="footerCols" style="display:contents"></div>
     </div>
     <p class="copyright" id="copyright"></p>
   </div>
@@ -1448,6 +1459,8 @@ function applySettings() {
     instagram: '<g fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4.2"/></g><circle cx="17.4" cy="6.6" r="1.3"/>',
     tiktok: '<path d="M16.5 3h-3.2v12.2a2.7 2.7 0 1 1-2.7-2.7c.3 0 .6 0 .8.1V9.3a6 6 0 1 0 5.1 5.9V9.1a7.6 7.6 0 0 0 4.4 1.4V7.3a4.4 4.4 0 0 1-4.4-4.3z"/>'
   };
+  $('#footerCols').innerHTML = (SITE.footerCols || []).map(c => `<div><h4>${esc(c.title || '')}</h4><ul>${(c.links || []).map(l =>
+    `<li><a href="${esc(l.link || '#')}"${/^https?:/.test(l.link || '') ? ' target="_blank" rel="noopener"' : ''}>${esc(l.label || '')}</a></li>`).join('')}</ul></div>`).join('');
   $('#socials').innerHTML = Object.keys(ICONS).filter(k => SITE.socials[k]).map(k =>
     `<a href="${esc(SITE.socials[k] || '#')}" target="_blank" rel="noopener" aria-label="${k}"><svg viewBox="0 0 24 24" fill="currentColor">${ICONS[k]}</svg></a>`).join('');
   const lnk = m => `<a href="${esc(m.link || '#')}"${m.highlight ? ' class="hl"' : ''}${/^https?:/.test(m.link || '') ? ' target="_blank" rel="noopener"' : ''}>${esc(m.label)}</a>`;
@@ -1455,7 +1468,7 @@ function applySettings() {
     ? `<div class="dd">${lnk(m)}<div class="dd-menu"><div>${m.children.map(lnk).join('')}</div></div></div>` : lnk(m)).join('');
   // Drawer (hamburger, all screen sizes): the top menu plus the footer links that aren't in it
   const sub = (label, items) => `<div class="sub"><button class="sub-toggle">${esc(label)}</button><div class="sub-links">${items.map(lnk).join('')}</div></div>`;
-  const brandLinks = [...document.querySelectorAll('footer a[href^="#/products?brand="]')].map(a => ({ label: a.textContent.trim(), link: a.getAttribute('href') }))
+  const brandLinks = (SITE.footerCols || []).flatMap(c => c.links || []).filter(l => /[?&]brand=/.test(l.link || ''))
     .concat([{ label: 'All brands', link: '#/brands' }]);
   $('#drawerNav').innerHTML = SITE.menu.map(m => m.children ? sub(m.label, m.children) : lnk(m)).join('')
     + '<div class="drawer-more">' + sub('Our Brands', brandLinks)
@@ -1643,7 +1656,17 @@ function setMeta(r) {
   document.title = t;
   const m = document.querySelector('meta[name=description]'); if (m) m.content = d;
 }
+/* Redirect links set in the site editor (General tab). #/syko → #/products?brand=SYKO, or to a full web address. */
+function redirectFor(page) {
+  const key = norm(page).replace(/^\/+|\/+$/g, '');
+  const hit = (SITE.redirects || []).find(x => x && x.from && norm(x.from).replace(/^[#\/]+|\/+$/g, '') === key && x.to);
+  return hit ? String(hit.to).trim() : '';
+}
+const KNOWN_PAGES = ['home', 'products', 'item', 'favorites', 'brands', 'marketing', 'about', 'dealers', 'editor', 'blog', 'contact', 'merch'];
 function render() {
+  const r0 = route();
+  if (!KNOWN_PAGES.includes(r0.page)) { const to = redirectFor(location.hash.replace(/^#\/?/, '').split('?')[0]);
+    if (to) { if (/^https?:/i.test(to)) { location.replace(to); return; } location.replace(to.startsWith('#') ? to : '#/' + to.replace(/^\/+/, '')); return; } }
   const r = route();
   setMeta(r);
   document.body.classList.toggle('editing', r.page === 'editor');
@@ -1705,7 +1728,7 @@ function renderHome() {
     ${SITE.stats.map(st => `<div class="stat"><b>${esc(numFmt(st.value))}</b><span>${esc(st.label)}</span></div>`).join('')}
   </div></div>
 
-  <section class="arrivals">
+  <section class="arrivals" data-sec="arrivals">
     <div class="container">
       <div class="arrivals-head center"><div class="eyebrow">★ ${esc(T.arrivals.sub)}</div><h2 class="section-title">${esc(T.arrivals.title)}</h2></div>
       ${arrivals.length ? `<div class="car-wrap"><div class="carousel" id="arrivals">${arrivals.map(slimCard).join('')}</div>
@@ -1717,8 +1740,7 @@ function renderHome() {
 
   ${featureSection()}
 
-
-  <section>
+  <section data-sec="categories">
     <div class="container center">
       <h2 class="section-title">${esc(T.categories.title)}</h2>
       <p class="section-sub">${esc(T.categories.sub)}</p>
@@ -1728,7 +1750,7 @@ function renderHome() {
     </div>
   </section>
 
-  <section id="brands" style="background:var(--bg-alt)">
+  <section id="brands" data-sec="brands" style="background:var(--bg-alt)">
     <div class="container">
       <h2 class="section-title">${esc(T.brands.title)}</h2>
       <p class="section-sub">${esc(T.brands.sub)}</p>
@@ -1737,7 +1759,7 @@ function renderHome() {
     </div>
   </section>
 
-  <section class="why${SITE.images.whyBg ? ' has-bg' : ''}">
+  <section class="why${SITE.images.whyBg ? ' has-bg' : ''}" data-sec="why">
     <div class="container">
       <div class="band-head center"><h2 class="section-title">${esc(T.why.title)}</h2><p class="section-sub" style="color:#333">${esc(T.why.sub)}</p></div>
       <div class="why-grid">
@@ -1750,10 +1772,13 @@ function renderHome() {
     </div>
   </section>
 
-  <div class="cta"><div class="container">
+  <div class="cta" data-sec="contact"><div class="container">
     <div><h2>${esc(T.contact.title)}</h2><p>${esc(T.contact.sub)}</p></div>
     <a class="btn solid" href="#/contact">${esc(T.contact.button)} →</a>
   </div></div>`;
+  // put the sections in the order chosen in the site editor; hidden ones are removed
+  const app = $('#app'), order = (SITE.homeOrder || []).concat(HOME_SECTIONS.map(x => x[0]).filter(k => !(SITE.homeOrder || []).includes(k)));
+  order.forEach(k => { const el = app.querySelector(`:scope > [data-sec="${k}"]`); if (el) ((SITE.homeHidden || []).includes(k) ? el.remove() : app.appendChild(el)); });
   if (slides.length > 1) {
     let cur = 0;
     const show = n => { cur = (n + slides.length) % slides.length;
@@ -1763,11 +1788,13 @@ function renderHome() {
     $('#hero').onclick = e => { const b = e.target.closest('[data-slide]'); if (b) { clearInterval(heroTimer); show(+b.dataset.slide); } };
   }
 }
+const HOME_SECTIONS = [['arrivals', 'New Arrivals'], ['feature', 'Featured brand (Syko)'], ['categories', 'Product Classification'],
+  ['brands', 'Featured Brands'], ['why', 'Why PyroBuy'], ['contact', '"Have a question?" band']];
 function featureSection() {
   const F = SITE.feature; if (!F || !F.show) return '';
   const items = shuffled(ITEMS.filter(i => isShowcase(i) && inBrand(i, F.brand))).slice(0, 12);
   const link = brandLink(F.brand);
-  return `<section class="feature" style="--fc:${esc(F.color)}"><div class="feature-grid">
+  return `<section class="feature" data-sec="feature" style="--fc:${esc(F.color)}"><div class="feature-grid">
     <div class="feature-media">${img(F.image, F.title + ' image')}${F.logo ? `<img class="feature-logo" src="${esc(F.logo)}" alt="${esc(F.title)}">` : ''}</div>
     <div class="feature-body">
       <div class="eyebrow">${esc(F.eyebrow)}</div>
@@ -2621,7 +2648,7 @@ const ensureDealers = () => dealersLoaded || (dealersLoaded = loadSaved('dealers
    and appear on the live site right away; this file never needs to be re-uploaded for content changes. */
 const ED = { token: '', refresh: '', exp: 0, email: '', ok: false, W: null, dirty: { site: false, dealers: false }, tab: 'general', open: new Set(), dPage: 0, dQuery: '', dEdit: -1 };
 const EDIT_KEYS = ['name', 'tagline', 'email', 'copyright', 'colors', 'images', 'menu', 'hero', 'stats', 'sections', 'featuredBrandsCount',
-  'categories', 'brands', 'socials', 'newItemsPlaylist', 'newArrivals', 'newArrivalsMax', 'feature', 'about', 'marketing', 'blog', 'contact', 'detailFields', 'detailLabels'];
+  'categories', 'brands', 'socials', 'homeOrder', 'homeHidden', 'redirects', 'footerCols', 'newItemsPlaylist', 'newArrivals', 'newArrivalsMax', 'feature', 'about', 'marketing', 'blog', 'contact', 'detailFields', 'detailLabels'];
 const clone = o => JSON.parse(JSON.stringify(o));
 const getP = (o, p) => p.split('.').reduce((a, k) => a == null ? a : a[k], o);
 function setP(o, p, v) { const ks = p.split('.'), last = ks.pop(); const t = ks.reduce((a, k, i) => (a[k] == null && (a[k] = /^\d+$/.test(ks[i + 1] || last) ? [] : {}), a[k]), o); t[last] = v; }
@@ -2659,9 +2686,14 @@ const ED_TABS = {
     { k: 'colors', label: 'Colors', type: 'group', fields: ['background', 'backgroundAlt', 'card', 'text', 'muted', 'accent', 'accent2', 'line'].map(c => ({ k: c, label: { background: 'Page background', backgroundAlt: 'Alternate sections / footer', card: 'Cards', text: 'Text', muted: 'Secondary text', accent: 'Accent (yellow)', accent2: 'Accent 2 (orange)', line: 'Borders' }[c], type: 'color' })) },
     { k: 'socials', label: 'Social links', type: 'group', fields: [TXT('facebook', 'Facebook'), TXT('youtube', 'YouTube'), TXT('instagram', 'Instagram'), TXT('tiktok', 'TikTok')] },
     { k: 'menu', label: 'Menu', type: 'list', title: 'label', hint: 'Merch Shop: paste its link in "Link".', fields: [TXT('label', 'Label'), TXT('link', 'Link', 'A page like #/products, or a full web address.'), { k: 'highlight', label: 'Show in accent color', type: 'bool' },
-      { k: 'children', label: 'Drop-down links', type: 'list', title: 'label', fields: [TXT('label', 'Label'), TXT('link', 'Link')] }] }
+      { k: 'children', label: 'Drop-down links', type: 'list', title: 'label', fields: [TXT('label', 'Label'), TXT('link', 'Link')] }] },
+    { k: 'footerCols', label: 'Footer link columns', type: 'list', title: 'title', fields: [TXT('title', 'Column heading'),
+      { k: 'links', label: 'Links', type: 'list', title: 'label', fields: [TXT('label', 'Label'), TXT('link', 'Link', 'A page like #/blog, or a full web address.')] }] },
+    { k: 'redirects', label: 'Redirect links', type: 'list', title: 'from', hint: 'Short links. Example: From "syko" To "#/products?brand=SYKO" makes yoursite.com/#/syko open the Syko products. "To" can also be a full web address (https://…).',
+      fields: [TXT('from', 'From (short name, no spaces)'), TXT('to', 'To (page like #/blog, or https://…)')] }
   ] },
   home: { title: 'Home page', fields: [
+    { k: 'homeOrder', label: 'Section order (drag to reorder, untick to hide)', type: 'order' },
     IMGS('images.hero', 'Banner background photos', 'Photos without text work best; the headline is drawn on top. 1920×800.'),
     { k: 'hero', label: 'Banner text', type: 'group', fields: [TXT('eyebrow', 'Small line above'), TXT('headline', 'Headline'), AREA('text', 'Text', '', 2),
       { k: 'button1', label: 'Button 1', type: 'group', fields: [TXT('label', 'Label'), TXT('link', 'Link')] }, { k: 'button2', label: 'Button 2', type: 'group', fields: [TXT('label', 'Label'), TXT('link', 'Link')] }] },
@@ -2720,9 +2752,17 @@ function edField(f, base) {
     case 'select': return `<div class="ed-f"><label for="${fid(p)}">${esc(label)}</label><select id="${fid(p)}" data-p="${p}">${f.opts.map(o => `<option${o === v ? ' selected' : ''}>${esc(o)}</option>`).join('')}</select>${hint}</div>`;
     case 'color': return `<div class="ed-f ed-color"><label for="${fid(p)}">${esc(label)}</label><div><input type="color" data-p="${p}" value="${esc(/^#[0-9a-f]{6}$/i.test(v || '') ? v : '#000000')}"><input id="${fid(p)}" data-p="${p}" value="${esc(v || '')}"></div>${hint}</div>`;
     case 'image': return edImage(p, label, v, hint);
+    case 'order': {
+      const cur = (Array.isArray(v) ? v : []).filter(k => HOME_SECTIONS.some(x => x[0] === k));
+      const all = cur.concat(HOME_SECTIONS.map(x => x[0]).filter(k => !cur.includes(k))), hid = ED.W.homeHidden || [];
+      return `<div class="ed-f ed-list"><label>${esc(label)}</label><small class="ed-hint">The banner and numbers bar always stay at the top.</small>
+        <div class="ed-order">${all.map((k, i) => `<div class="ed-str ed-drag" draggable="true" data-drag-list="${p}" data-i="${i}" data-key="${k}"><span class="ed-handle" title="Drag to move">⠿</span>
+          <label class="ed-chk" style="flex:1"><input type="checkbox" data-show="${k}"${hid.includes(k) ? '' : ' checked'}> ${esc((HOME_SECTIONS.find(x => x[0] === k) || [k, k])[1])}</label>
+          <div class="ed-mini">${i ? `<button type="button" data-act="up" data-list="${p}" data-i="${i}" aria-label="Move up">↑</button>` : ''}${i < all.length - 1 ? `<button type="button" data-act="down" data-list="${p}" data-i="${i}" aria-label="Move down">↓</button>` : ''}</div></div>`).join('')}</div></div>`;
+    }
     case 'strings': {
       const arr = Array.isArray(v) ? v : [];
-      return `<div class="ed-f"><label>${esc(label)}</label>${hint}<div class="ed-strs">${arr.map((s, i) => `<div class="ed-str">${
+      return `<div class="ed-f"><label>${esc(label)}</label>${hint}<div class="ed-strs">${arr.map((s, i) => `<div class="ed-str ed-drag" draggable="true" data-drag-list="${p}" data-i="${i}"><span class="ed-handle" title="Drag to move">⠿</span>${
         f.sub === 'image' ? edImage(p + '.' + i, '', s, '', true) : f.sub === 'area' ? `<textarea data-p="${p}.${i}" rows="2">${esc(s)}</textarea>` : `<input data-p="${p}.${i}" value="${esc(s)}">`}
         <div class="ed-mini">${i ? `<button type="button" data-act="up" data-list="${p}" data-i="${i}" aria-label="Move up">↑</button>` : ''}<button type="button" data-act="del" data-list="${p}" data-i="${i}" aria-label="Remove">✕</button></div></div>`).join('')}</div>
         <button type="button" class="btn sm" data-act="addstr" data-list="${p}">+ Add</button></div>`;
@@ -2732,7 +2772,7 @@ function edField(f, base) {
       return `<div class="ed-f ed-list"><label>${esc(label)} <span class="ed-count">${arr.length}</span></label>${hint}
         ${f.addFirst ? `<button type="button" class="btn sm" data-act="add" data-list="${p}" data-first="1">+ Add new</button>` : ''}
         ${arr.map((it, i) => { const ip = p + '.' + i, t = (it && it[f.title]) || '(untitled)';
-          return `<details class="ed-item"${ED.open.has(ip) ? ' open' : ''} data-open="${ip}"><summary><span>${esc(String(t))}</span><span class="ed-mini">
+          return `<details class="ed-item ed-drag"${ED.open.has(ip) ? ' open' : ''} data-open="${ip}" draggable="true" data-drag-list="${p}" data-i="${i}"><summary><span><span class="ed-handle" title="Drag to move">⠿</span> ${esc(String(t))}</span><span class="ed-mini">
             ${i ? `<button type="button" data-act="up" data-list="${p}" data-i="${i}" aria-label="Move up">↑</button>` : ''}${i < arr.length - 1 ? `<button type="button" data-act="down" data-list="${p}" data-i="${i}" aria-label="Move down">↓</button>` : ''}
             <button type="button" data-act="del" data-list="${p}" data-i="${i}" aria-label="Remove">✕</button></span></summary>
             <div class="ed-item-body">${f.fields.map(x => edField(x, ip)).join('')}</div></details>`; }).join('')}
@@ -2813,10 +2853,26 @@ function edBind() {
     catch (err) { toast('Upload failed: ' + err.message); }
     lab.firstChild.textContent = 'Upload'; el.value = '';
   });
+  // drag and drop to reorder any list (typing in a box inside a row still works)
+  let drag = null;
+  m.addEventListener('dragstart', e => { const r = e.target.closest && e.target.closest('[data-drag-list]');
+    if (!r || /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+    drag = { list: r.dataset.dragList, i: +r.dataset.i }; r.classList.add('ed-dragging'); e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', ''); } catch (x) {} e.stopPropagation(); });
+  m.addEventListener('dragover', e => { if (!drag) return; const r = e.target.closest('[data-drag-list]'); if (!r || r.dataset.dragList !== drag.list) return;
+    e.preventDefault(); m.querySelectorAll('.ed-over').forEach(x => x.classList.remove('ed-over')); r.classList.add('ed-over'); });
+  m.addEventListener('dragend', () => { drag = null; m.querySelectorAll('.ed-over,.ed-dragging').forEach(x => x.classList.remove('ed-over', 'ed-dragging')); });
+  m.addEventListener('drop', e => { if (!drag) return; const r = e.target.closest('[data-drag-list]'); if (!r || r.dataset.dragList !== drag.list) return; e.preventDefault();
+    const p = drag.list, to = +r.dataset.i; let arr = (getP(ED.W, p) || []).slice();
+    if (p === 'homeOrder') arr = [...document.querySelectorAll('.ed-order [data-key]')].map(x => x.dataset.key);
+    if (to !== drag.i) { const [x] = arr.splice(drag.i, 1); arr.splice(to, 0, x); setP(ED.W, p, arr); edMark(p); }
+    drag = null; const y = scrollY; edTab(); scrollTo(0, y); });
+  m.addEventListener('change', e => { const c = e.target.closest('[data-show]'); if (!c) return;
+    const k = c.dataset.show, h = new Set(ED.W.homeHidden || []); c.checked ? h.delete(k) : h.add(k); ED.W.homeHidden = [...h]; edMark('homeHidden'); });
   m.addEventListener('toggle', e => { const d = e.target.closest && e.target.closest('details[data-open]'); if (d) d.open ? ED.open.add(d.dataset.open) : ED.open.delete(d.dataset.open); }, true);
   m.addEventListener('click', e => {
     const b = e.target.closest('[data-act]'); if (!b || !b.dataset.list) return; e.preventDefault();
-    const p = b.dataset.list, arr = (getP(ED.W, p) || []).slice(), i = +b.dataset.i;
+    const p = b.dataset.list, i = +b.dataset.i; let arr = (getP(ED.W, p) || []).slice();
+    if (p === 'homeOrder') arr = [...document.querySelectorAll('.ed-order [data-key]')].map(x => x.dataset.key);
     if (b.dataset.act === 'add') { const blank = {}; if (b.dataset.first) arr.unshift(blank); else arr.push(blank); ED.open.add(p + '.' + (b.dataset.first ? 0 : arr.length - 1)); }
     if (b.dataset.act === 'addstr') arr.push('');
     if (b.dataset.act === 'del') { if (!b.dataset.armed) { b.dataset.armed = 1; b.textContent = 'Remove?'; b.classList.add('warn'); return; } arr.splice(i, 1); }
@@ -2958,7 +3014,7 @@ function edAccount() {
     <div class="ed-group"><h3>How editing works</h3><ul class="ed-help">
       <li>Change anything in the tabs on the left, then click <b>Save changes</b>. Changes appear on the live site right away.</li>
       <li><b>Images:</b> click Upload to add a photo from your computer, or paste a link to an image that's already online.</li>
-      <li><b>Lists</b> (brands, posts, files, dealers): click an entry to open it, use ↑ ↓ to reorder, ✕ twice to remove.</li>
+      <li><b>Lists</b> (brands, posts, files, dealers): click an entry to open it, drag it by ⠿ (or use ↑ ↓) to reorder, ✕ twice to remove.</li>
       <li><b>Products</b>, product photos and YouTube links come from the Marketing Portfolio, not from here.</li>
       <li>Open this editor any time at <b>${esc(location.origin + location.pathname)}#/editor</b>. It isn't linked anywhere on the site.</li></ul></div>
     <form class="ed-group" id="edPwF"><h3>Change your password</h3>
